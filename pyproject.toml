@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentic-memory"
+name = "multi-bit-adaptive-quantization"
 version = "0.0.1"
-description = "A library for implementing agentic memory in LLM applications."
+description = "Adaptive multi-bit embedding compression and memory retrieval tools for LLM applications."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }
@@ -41,11 +41,14 @@ include = ["agentic_memory*"]
 exclude = ["tests*"]
 
 [project.urls]
-"Homepage" = "https://github.com/agiresearch/A-mem"
-"Bug Tracker" = "https://github.com/agiresearch/A-mem/issues"
+"Homepage" = "https://github.com/agiresearch/multi-bit-adaptive-quantization"
+"Bug Tracker" = "https://github.com/agiresearch/multi-bit-adaptive-quantization/issues"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
 addopts = "-q"
 pythonpath = ["."]
+filterwarnings = [
+    "ignore:Test functions should return None:pytest.PytestReturnNotNoneWarning",
+]

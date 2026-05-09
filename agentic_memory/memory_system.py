@@ -95,7 +95,8 @@ class AgenticMemorySystem:
                  llm_backend: str = "openai",
                  llm_model: str = "gpt-4o-mini",
                  evo_threshold: int = 100,
-                 api_key: Optional[str] = None):  
+                 api_key: Optional[str] = None,
+                 retriever: Optional[Any] = None):  
         """Initialize the memory system.
         
         Args:
@@ -104,22 +105,31 @@ class AgenticMemorySystem:
             llm_model: Name of the LLM model
             evo_threshold: Number of memories before triggering evolution
             api_key: API key for the LLM service
+            retriever: Optional custom retriever implementation
         """
         self.memories = {}
         self.model_name = model_name
-        # Initialize ChromaDB retriever with empty collection
-        try:
-            # First try to reset the collection if it exists
-            temp_retriever = ChromaRetriever(collection_name="memories",model_name=self.model_name)
-            temp_retriever.client.reset()
-        except Exception as e:
-            logger.warning(f"Could not reset ChromaDB collection: {e}")
-            
-        # Create a fresh retriever instance
-        self.retriever = ChromaRetriever(collection_name="memories",model_name=self.model_name)
+        if retriever is not None:
+            self.retriever = retriever
+        else:
+            # Initialize ChromaDB retriever with empty collection
+            try:
+                # First try to reset the collection if it exists
+                temp_retriever = ChromaRetriever(collection_name="memories",model_name=self.model_name)
+                temp_retriever.client.reset()
+            except Exception as e:
+                logger.warning(f"Could not reset ChromaDB collection: {e}")
+                
+            # Create a fresh retriever instance
+            self.retriever = ChromaRetriever(collection_name="memories",model_name=self.model_name)
         
-        # Initialize LLM controller
-        self.llm_controller = LLMController(llm_backend, llm_model, api_key)
+        # Initialize LLM controller. Core memory CRUD/search should still work
+        # in local/test environments without an LLM key or Ollama installed.
+        try:
+            self.llm_controller = LLMController(llm_backend, llm_model, api_key)
+        except Exception as e:
+            logger.warning(f"LLM controller unavailable; evolution will be skipped: {e}")
+            self.llm_controller = None
         self.evo_cnt = 0
         self.evo_threshold = evo_threshold
 
@@ -199,9 +209,11 @@ class AgenticMemorySystem:
                 ]
             }
 
-            Content for analysis:
+        Content for analysis:
             """ + content
         try:
+            if self.llm_controller is None:
+                return {"keywords": [], "context": "General", "tags": []}
             response = self.llm_controller.llm.get_completion(prompt, response_format={"type": "json_schema", "json_schema": {
                         "name": "response",
                         "schema": {
@@ -604,6 +616,9 @@ class AgenticMemorySystem:
             # Get nearest neighbors
             neighbors_text, indices = self.find_related_memories(note.content, k=5)
             if not neighbors_text or not indices:
+                return False, note
+
+            if self.llm_controller is None:
                 return False, note
                 
             # Format neighbors for LLM - in this case, neighbors_text is already formatted

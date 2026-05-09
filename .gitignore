@@ -191,6 +191,9 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# Local agent/editor tooling
+.kilo/
+
 # PyPI configuration file
 .pypirc
 

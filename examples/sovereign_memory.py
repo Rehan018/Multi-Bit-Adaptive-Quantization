@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agentic_memory.memory_system import AgenticMemorySystem
 
 def main():
-    print("🧠 Initializing A-mem Sovereign System (Local)...")
+    print("Initializing Multi-Bit Adaptive Quantization memory system (local)...")
     
     # Initialize with local backend
     # Note: Requires Ollama running with 'llama3' pulled
@@ -17,16 +17,16 @@ def main():
             llm_backend="ollama",
             llm_model="llama3" 
         )
-        print("✅ System initialized.")
+        print("System initialized.")
     except Exception as e:
-        print(f"❌ Init failed: {e}")
+        print(f"Init failed: {e}")
         return
 
     # Add a memory
-    print("\n📝 Adding Sovereign Memory...")
+    print("\nAdding sovereign memory...")
     content = "The user values data sovereignty and local processing above all else."
     try:
-        # Note: A-mem automatically generates tags/context via LLM here
+        # Note: the memory system can generate tags/context via LLM here.
         memory_id = memory_system.add_note(
             content=content,
             tags=["sovereign", "privacy"],
@@ -34,11 +34,11 @@ def main():
         )
         print(f"   Memory stored with ID: {memory_id}")
     except Exception as e:
-        print(f"❌ Failed to store memory: {e}")
+        print(f"Failed to store memory: {e}")
         return
 
     # Retrieve
-    print("\n🔍 Retrieving Memory...")
+    print("\nRetrieving memory...")
     try:
         results = memory_system.search_agentic("sovereignty", k=1)
         for res in results:
@@ -46,7 +46,7 @@ def main():
             print(f"   Tags: {res['tags']}")
             print(f"   Context (LLM Generated): {res.get('context', 'N/A')}")
     except Exception as e:
-        print(f"❌ Retrieval failed: {e}")
+        print(f"Retrieval failed: {e}")
 
 if __name__ == "__main__":
     main()

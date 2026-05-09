@@ -1,193 +1,200 @@
-# Agentic Memory 🧠
+# Multi-Bit Adaptive Quantization
 
-A novel agentic memory system for LLM agents that can dynamically organize memories in an agentic way.
+Multi-Bit Adaptive Quantization is a Python toolkit for compressed embedding storage and memory retrieval in LLM applications. It combines agent-style memory notes with TurboQuant compression, adaptive bit-width selection, persistent compressed storage, and hybrid search.
 
-## Introduction 🌟
+The Python import package remains `agentic_memory` for backward compatibility. The repository focus is now the multi-bit compression and retrieval layer built around it.
 
-Large Language Model (LLM) agents have demonstrated remarkable capabilities in handling complex real-world tasks through external tool usage. However, to effectively leverage historical experiences, they require sophisticated memory systems. Traditional memory systems, while providing basic storage and retrieval functionality, often lack advanced memory organization capabilities.
+Related papers and source material:
 
-Our project introduces an innovative **Agentic Memory** system that revolutionizes how LLM agents manage and utilize their memories:
+- [Upstream memory-system paper](https://arxiv.org/pdf/2502.12110)
+- [TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate](https://arxiv.org/abs/2504.19874)
+- Original memory-system reproduction repository: [WujiangXu/AgenticMemory](https://github.com/WujiangXu/AgenticMemory)
 
-<div align="center">
-  <img src="Figure/intro-a.jpg" alt="Traditional Memory System" width="600"/>
-  <img src="Figure/intro-b.jpg" alt="Our Proposed Agentic Memory" width="600"/>
-  <br>
-  <em>Comparison between traditional memory system (top) and our proposed agentic memory (bottom). Our system enables dynamic memory operations and flexible agent-memory interactions.</em>
-</div>
+## What This Project Does
 
-> **Note:** This repository provides a memory system to facilitate agent construction. If you want to reproduce the results presented in our paper, please refer to: [https://github.com/WujiangXu/AgenticMemory](https://github.com/WujiangXu/AgenticMemory)
+The project treats memory as more than a flat vector store. Each memory is a note with content and metadata:
 
-For more details, please refer to our paper: [A-MEM: Agentic Memory for LLM Agents](https://arxiv.org/pdf/2502.12110)
+- keywords
+- context
+- tags
+- category
+- timestamps
+- retrieval count
+- links to related memories
+- evolution history
 
+The basic flow is:
 
-## Key Features ✨
+1. Add a memory note.
+2. Store it in ChromaDB for retrieval.
+3. Search by semantic similarity.
+4. Optionally use an LLM to analyze related memories and update links, tags, or context.
 
-- 🔄 Dynamic memory organization based on Zettelkasten principles
-- 🔍 Intelligent indexing and linking of memories via ChromaDB
-- 📝 Comprehensive note generation with structured attributes
-- 🌐 Interconnected knowledge networks
-- 🧬 Continuous memory evolution and refinement
-- 🤖 Agent-driven decision making for adaptive memory management
+The repo includes these compression and retrieval pieces:
 
-## Framework 🏗️
+- TurboQuant vector compression
+- persistent compressed memory
+- adaptive bit-width compression
+- hybrid keyword + vector search
+- a lightweight memory-evolution filter
 
-<div align="center">
-  <img src="Figure/framework.jpg" alt="Agentic Memory Framework" width="800"/>
-  <br>
-  <em>The framework of our Agentic Memory system showing the dynamic interaction between LLM agents and memory components.</em>
-</div>
+## Installation
 
-## How It Works 🛠️
+Create a virtual environment first:
 
-When a new memory is added to the system:
-1. Generates comprehensive notes with structured attributes
-2. Creates contextual descriptions and tags
-3. Analyzes historical memories for relevant connections
-4. Establishes meaningful links based on similarities
-5. Enables dynamic memory evolution and updates
-
-## Results 📊
-
-Empirical experiments conducted on six foundation models demonstrate superior performance compared to existing SOTA baselines.
-
-## Getting Started 🚀
-
-1. Clone the repository:
-```bash
-git clone https://github.com/agiresearch/A-mem.git
-cd A-mem
-```
-
-2. Install dependencies:
-Create and activate a virtual environment (recommended):
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
+source .venv/bin/activate
 ```
 
 Install the package:
-```bash
-pip install .
-```
-For development, you can install it in editable mode:
+
 ```bash
 pip install -e .
 ```
 
-3. Usage Examples 💡
+For tests:
 
-Here's how to use the Agentic Memory system for basic operations:
+```bash
+pip install "pytest>=8.0"
+```
+
+## Quick Start
 
 ```python
 from agentic_memory.memory_system import AgenticMemorySystem
 
-# Initialize the memory system 🚀
-memory_system = AgenticMemorySystem(
-    model_name='all-MiniLM-L6-v2',  # Embedding model for ChromaDB
-    llm_backend="openai",           # LLM backend (openai/ollama)
-    llm_model="gpt-4o-mini"         # LLM model name
+memory = AgenticMemorySystem(
+    model_name="all-MiniLM-L6-v2",
+    llm_backend="openai",
+    llm_model="gpt-4o-mini",
 )
 
-# Add Memories ➕
-# Simple addition
-memory_id = memory_system.add_note("Deep learning neural networks")
-
-# Addition with metadata
-memory_id = memory_system.add_note(
-    content="Machine learning project notes",
-    tags=["ml", "project"],
-    category="Research",
-    timestamp="202503021500"  # YYYYMMDDHHmm format
+memory_id = memory.add_note(
+    content="The user prefers concise technical explanations.",
+    tags=["preference", "communication"],
+    category="User Profile",
 )
 
-# Read (Retrieve) Memories 📖
-# Get memory by ID
-memory = memory_system.read(memory_id)
-print(f"Content: {memory.content}")
-print(f"Tags: {memory.tags}")
-print(f"Context: {memory.context}")
-print(f"Keywords: {memory.keywords}")
+result = memory.read(memory_id)
+print(result.content)
 
-# Search memories
-results = memory_system.search_agentic("neural networks", k=5)
-for result in results:
-    print(f"ID: {result['id']}")
-    print(f"Content: {result['content']}")
-    print(f"Tags: {result['tags']}")
-    print("---")
-
-# Update Memories 🔄
-memory_system.update(memory_id, content="Updated content about deep learning")
-
-# Delete Memories ❌
-memory_system.delete(memory_id)
-
-# Memory Evolution 🧬
-# The system automatically evolves memories by:
-# 1. Finding semantic relationships using ChromaDB
-# 2. Updating metadata and context
-# 3. Creating connections between related memories
-# This happens automatically when adding or updating memories!
+matches = memory.search_agentic("how should I explain technical topics?", k=5)
+for item in matches:
+    print(item["content"])
 ```
 
-### Advanced Features 🌟
+If no LLM backend is configured, basic memory CRUD and search still work. LLM-based metadata generation and evolution are skipped gracefully.
 
-1. **ChromaDB Vector Storage** 📦
-   - Efficient vector embedding storage and retrieval
-   - Fast semantic similarity search
-   - Automatic metadata handling
-   - Persistent memory storage
+## Using a Custom Retriever
 
-2. **Memory Evolution** 🧬
-   - Automatically analyzes content relationships
-   - Updates tags and context based on related memories
-   - Creates semantic connections between memories
+You can pass a custom retriever into `AgenticMemorySystem`. For example, to use TurboQuant-backed compressed metadata:
 
-3. **Flexible Metadata** 📋
-   - Custom tags and categories
-   - Automatic keyword extraction
-   - Context generation
-   - Timestamp tracking
+```python
+from agentic_memory.memory_system import AgenticMemorySystem
+from agentic_memory.retrievers import TurboQuantRetriever
 
-4. **Multiple LLM Backends** 🤖
-   - OpenAI (GPT-4, GPT-3.5)
-   - Ollama (for local deployment)
+retriever = TurboQuantRetriever(
+    collection_name="compressed_memories",
+    bit_width=4,
+    use_qjl=True,
+    embedding_dimension=384,
+)
 
-### Best Practices 💪
+memory = AgenticMemorySystem(retriever=retriever)
+```
 
-1. **Memory Creation** ✨:
-   - Provide clear, specific content
-   - Add relevant tags for better organization
-   - Let the system handle context and keyword generation
+For normal ChromaDB usage, you do not need to pass a retriever.
 
-2. **Memory Retrieval** 🔍:
-   - Use specific search queries
-   - Adjust 'k' parameter based on needed results
-   - Consider both exact and semantic matches
+## Core Components
 
-3. **Memory Evolution** 🧬:
-   - Allow automatic evolution to organize memories
-   - Review generated connections periodically
-   - Use consistent tagging conventions
+### `AgenticMemorySystem`
 
-4. **Error Handling** ⚠️:
-   - Always check return values
-   - Handle potential KeyError for non-existent memories
-   - Use try-except blocks for LLM operations
+The main user-facing class. It manages memory notes, metadata, search, updates, deletes, and optional evolution.
 
-## Citation 📚
+Path:
 
-If you use this code in your research, please cite our work:
+```text
+agentic_memory/memory_system.py
+```
+
+### `ChromaRetriever`
+
+The default in-memory ChromaDB retriever.
+
+Path:
+
+```text
+agentic_memory/retrievers.py
+```
+
+### `PersistentChromaRetriever`
+
+A ChromaDB retriever that survives process restarts.
+
+### `TurboQuantRetriever`
+
+Stores packed TurboQuant representations in metadata and can rank with compressed vectors through `search_with_compression()`.
+
+## Compressed Memory Features
+
+The TurboQuant integration compresses dense embeddings into packed byte arrays. For 384-dimensional `float32` vectors:
+
+| Mode | Stored bytes | Approx. ratio |
+| --- | ---: | ---: |
+| 2-bit + QJL | 96 bytes | 16.0x |
+| 3-bit + QJL | 144 bytes | 10.7x |
+| 4-bit + QJL | 192 bytes | 8.0x |
+
+This is useful for metadata snapshots, backups, and compressed persistence. It does not replace ChromaDB's internal vector index with a production compressed index.
+
+## Documentation
+
+The docs are split by feature:
+
+- [TurboQuant guide](docs/turboquant-guide.md)
+- [Persistent compressed memory](docs/persistent-compressed-memory.md)
+- [Adaptive quantization](docs/adaptive-quantization.md)
+- [Hybrid search](docs/hybrid-search.md)
+- [Memory evolution](docs/memory-evolution.md)
+
+## Running Tests
+
+Use the repo virtual environment:
+
+```bash
+.venv/bin/pytest -q
+```
+
+You can also run focused tests:
+
+```bash
+.venv/bin/pytest -q tests/test_turboquant.py
+.venv/bin/pytest -q tests/test_persistent_compressed.py
+.venv/bin/pytest -q tests/test_hybrid_search.py
+```
+
+## Practical Notes
+
+- OpenAI support requires `OPENAI_API_KEY`.
+- Ollama support requires the `ollama` Python package and a running local Ollama setup.
+- If no LLM backend is available, the system still stores and retrieves memories.
+- TurboQuant code is NumPy CPU code. It is not a CUDA or Triton implementation.
+- Compressed search currently scans compressed metadata in Python, so it is best treated as an experimental retrieval path rather than a large-scale vector database engine.
+
+## Citation
+
+If you use the original memory-system research, cite the upstream paper:
 
 ```bibtex
 @article{xu2025mem,
-  title={A-mem: Agentic memory for llm agents},
+  title={Agentic memory for llm agents},
   author={Xu, Wujiang and Liang, Zujie and Mei, Kai and Gao, Hang and Tan, Juntao and Zhang, Yongfeng},
   journal={arXiv preprint arXiv:2502.12110},
   year={2025}
 }
 ```
 
-## License 📄
+## License
 
-This project is licensed under the MIT License. See LICENSE for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
